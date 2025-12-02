@@ -1,0 +1,703 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>IndexTTS2 控制台</title>
+  <style>
+    :root {
+      --bg: #0b1224;
+      --panel: #121b32;
+      --muted: #9fb4d6;
+      --accent: #3dd598;
+      --accent-2: #7c8cf0;
+      --border: #1f2b46;
+      --danger: #ff7b7b;
+      --warn: #ffd166;
+      --font: "Fira Sans", "PingFang SC", "Microsoft YaHei", "Helvetica Neue", sans-serif;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: var(--font);
+      background: radial-gradient(circle at 20% 20%, rgba(124, 140, 240, 0.12), transparent 35%),
+                  radial-gradient(circle at 80% 10%, rgba(61, 213, 152, 0.16), transparent 30%),
+                  linear-gradient(135deg, #0b1224, #0f1a33 55%, #0b1224);
+      color: #e8efff;
+      min-height: 100vh;
+    }
+    .page {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 32px 20px 56px;
+    }
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 22px;
+      gap: 12px;
+    }
+    .title {
+      font-size: 26px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+    }
+    .subtitle {
+      color: var(--muted);
+      font-size: 14px;
+      margin-top: 6px;
+    }
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 14px;
+      border-radius: 999px;
+      background: rgba(124, 140, 240, 0.14);
+      border: 1px solid rgba(124, 140, 240, 0.3);
+      color: #d7ddff;
+      font-weight: 600;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: 1.2fr 1fr;
+      gap: 18px;
+      flex-wrap: wrap;
+    }
+    @media (max-width: 980px) {
+      .grid { grid-template-columns: 1fr; }
+    }
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 18px 18px 16px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+    }
+    .panel h2 {
+      margin: 0 0 14px;
+      font-size: 18px;
+      letter-spacing: 0.2px;
+    }
+    label {
+      display: block;
+      margin-bottom: 6px;
+      color: var(--muted);
+      font-size: 13px;
+      letter-spacing: 0.2px;
+    }
+    textarea, input, select {
+      width: 100%;
+      background: #0d162b;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 12px;
+      color: #e8efff;
+      font-size: 14px;
+      outline: none;
+      transition: border-color 0.15s ease, transform 0.15s ease;
+    }
+    textarea:focus, input:focus, select:focus {
+      border-color: var(--accent);
+      transform: translateY(-1px);
+    }
+    textarea {
+      resize: vertical;
+      min-height: 130px;
+      line-height: 1.5;
+    }
+    .row {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+    }
+    .actions {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      margin-top: 12px;
+      flex-wrap: wrap;
+    }
+    button {
+      border: none;
+      cursor: pointer;
+      border-radius: 12px;
+      padding: 12px 16px;
+      font-weight: 700;
+      letter-spacing: 0.2px;
+      color: #0b1224;
+      background: linear-gradient(135deg, var(--accent), #55e6ad);
+      box-shadow: 0 12px 30px rgba(61, 213, 152, 0.35);
+      transition: transform 0.12s ease, box-shadow 0.12s ease, filter 0.15s ease;
+    }
+    button.secondary {
+      background: transparent;
+      color: #d5defc;
+      border: 1px solid var(--border);
+      box-shadow: none;
+    }
+    button:disabled {
+      cursor: not-allowed;
+      filter: grayscale(0.4);
+      box-shadow: none;
+      transform: none;
+    }
+    button:hover:not(:disabled) { transform: translateY(-1px); }
+    .status {
+      font-size: 14px;
+      color: var(--muted);
+      margin-top: 10px;
+      min-height: 20px;
+    }
+    .badge {
+      padding: 4px 9px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      border: 1px solid transparent;
+    }
+    .badge.success { background: rgba(61, 213, 152, 0.18); color: #9ef0c9; border-color: rgba(61, 213, 152, 0.4); }
+    .badge.warn { background: rgba(255, 209, 102, 0.16); color: #ffe39f; border-color: rgba(255, 209, 102, 0.35); }
+    .badge.danger { background: rgba(255, 123, 123, 0.16); color: #ffc6c6; border-color: rgba(255, 123, 123, 0.35); }
+    .result {
+      margin-top: 12px;
+      background: #0d162b;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    th, td {
+      padding: 10px 8px;
+      border-bottom: 1px solid var(--border);
+      text-align: left;
+      font-size: 13px;
+    }
+    th { color: var(--muted); font-weight: 600; }
+    tr:hover td { background: rgba(255, 255, 255, 0.02); }
+    .muted { color: var(--muted); }
+    .audio-wrap {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-top: 10px;
+    }
+    .link {
+      color: var(--accent);
+      text-decoration: none;
+      font-weight: 600;
+    }
+    .link:hover { text-decoration: underline; }
+    .chips { display: flex; gap: 8px; flex-wrap: wrap; }
+    .chip {
+      padding: 8px 12px;
+      background: rgba(255, 255, 255, 0.04);
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      font-size: 13px;
+      color: #d7e5ff;
+    }
+    .history-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 8px;
+    }
+    .ghost-btn {
+      background: rgba(255, 255, 255, 0.04);
+      color: #d5defc;
+      border: 1px solid var(--border);
+      padding: 8px 10px;
+      border-radius: 10px;
+      box-shadow: none;
+      font-weight: 600;
+    }
+    .ghost-btn:hover { transform: translateY(-1px); }
+    .upload-row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 10px;
+      align-items: center;
+      margin-top: 10px;
+    }
+    .upload-note { color: var(--muted); font-size: 12px; }
+    input[type="file"] { padding: 8px; background: #0d162b; }
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.55);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 20;
+      backdrop-filter: blur(2px);
+    }
+    .modal {
+      background: #0f1a33;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 16px;
+      width: min(520px, 90vw);
+      box-shadow: 0 20px 60px rgba(0,0,0,0.35);
+      position: relative;
+    }
+    .modal h3 { margin: 0 0 12px; }
+    .modal-close {
+      position: absolute;
+      right: 12px; top: 10px;
+      border: none;
+      background: transparent;
+      color: #d7e5ff;
+      font-size: 20px;
+      cursor: pointer;
+      padding: 6px;
+      box-shadow: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header>
+      <div>
+        <div class="title">IndexTTS2 控制台</div>
+        <div class="subtitle">提交文本生成音频，查看下载历史</div>
+      </div>
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+        <div class="pill" id="queue-info">队列加载中...</div>
+        <button id="upload-trigger" class="secondary" style="border-color:rgba(61,213,152,0.4);color:#a2ffd7;">上传音色</button>
+        <button id="cleanup-btn" class="secondary">清理缓存/生成文件</button>
+      </div>
+    </header>
+
+    <div class="grid">
+      <section class="panel">
+        <h2>生成音频</h2>
+        <form id="tts-form">
+          <label for="text">文本</label>
+          <textarea id="text" name="text" placeholder="请输入要合成的内容，支持换行断句" required></textarea>
+
+          <div class="row">
+            <div>
+              <label for="prompt_audio">音色 / 参考音频</label>
+              <select id="prompt_audio" name="prompt_audio"></select>
+            </div>
+            <div>
+              <label for="target_duration">目标时长 (秒，可选)</label>
+              <input id="target_duration" name="target_duration" type="number" step="0.1" min="0" placeholder="留空则使用模型默认时长">
+            </div>
+          </div>
+
+          <label for="device_mode">推理设备</label>
+          <select id="device_mode" name="device_mode">
+            <option value="auto">AUTO（自动选择）</option>
+            <option value="gpu">GPU</option>
+            <option value="gpu_cuda">GPU CUDA</option>
+            <option value="cpu">CPU</option>
+          </select>
+
+          <label for="emo_text">情绪描述 (可选)</label>
+          <input id="emo_text" name="emo_text" placeholder="例如：温柔、活力、播报腔">
+
+          <label style="display:flex;align-items:center;gap:8px;margin-top:10px;">
+            <input id="force_split" type="checkbox" style="width:auto;"> 在换行处强制断句
+          </label>
+
+          <div class="actions">
+            <button type="submit" id="submit-btn">生成音频</button>
+            <button type="button" class="secondary" id="refresh-history">刷新历史</button>
+            <div class="status" id="status-text"></div>
+          </div>
+        </form>
+
+        <div class="result" id="result-box" style="display:none;">
+          <div class="chips" id="result-tags"></div>
+          <div class="audio-wrap">
+            <audio id="audio-player" controls></audio>
+            <div><a class="link" id="download-link" target="_blank" rel="noopener">下载音频</a> · <a class="link" id="srt-link" target="_blank" rel="noopener">下载字幕</a></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="history-header">
+          <h2 style="margin:0;">历史任务</h2>
+          <button type="button" class="secondary" id="refresh-queue">刷新队列</button>
+        </div>
+        <div class="muted" style="margin-bottom:8px;">已生成的任务会在此展示，可直接播放已完成的音频</div>
+        <div style="overflow:auto; max-height:520px;">
+          <table>
+            <thead>
+              <tr>
+                <th>状态</th>
+                <th>设备</th>
+                <th>文本</th>
+                <th>创建时间</th>
+                <th>指标</th>
+                <th>操作</th>
+              </tr>
+            </thead>
+            <tbody id="history-body">
+              <tr><td colspan="6" class="muted">加载中...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <div id="player-modal" class="modal-backdrop">
+    <div class="modal">
+      <button class="modal-close" id="modal-close" aria-label="关闭">×</button>
+      <h3>播放音频</h3>
+      <audio id="modal-audio" controls style="width:100%;"></audio>
+      <div class="audio-wrap" style="margin-top:10px;">
+        <div><a class="link" id="modal-download" target="_blank" rel="noopener">下载音频</a> · <a class="link" id="modal-srt" target="_blank" rel="noopener">字幕</a></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="upload-modal" class="modal-backdrop">
+    <div class="modal">
+      <button class="modal-close" id="upload-close" aria-label="关闭">×</button>
+      <h3>上传音色</h3>
+      <p class="muted" style="margin-top:4px;">仅支持 wav，2MB以内。上传后自动加入音色列表。</p>
+      <div class="upload-row" style="margin-top:14px;">
+        <input id="voice-file" type="file" accept=".wav,audio/wav">
+        <button type="button" class="secondary" id="upload-voice">上传</button>
+      </div>
+      <div class="upload-note" id="upload-status" style="margin-top:8px;">选择文件后点击上传</div>
+    </div>
+  </div>
+
+  <script>
+    const formEl = document.getElementById('tts-form');
+    const promptSelect = document.getElementById('prompt_audio');
+    const statusText = document.getElementById('status-text');
+    const submitBtn = document.getElementById('submit-btn');
+    const resultBox = document.getElementById('result-box');
+    const audioPlayer = document.getElementById('audio-player');
+    const downloadLink = document.getElementById('download-link');
+    const srtLink = document.getElementById('srt-link');
+    const resultTags = document.getElementById('result-tags');
+    const historyBody = document.getElementById('history-body');
+    const queueInfo = document.getElementById('queue-info');
+    const refreshHistoryBtn = document.getElementById('refresh-history');
+    const refreshQueueBtn = document.getElementById('refresh-queue');
+    const deviceMode = document.getElementById('device_mode');
+    const voiceFile = document.getElementById('voice-file');
+    const uploadBtn = document.getElementById('upload-voice');
+    const uploadStatus = document.getElementById('upload-status');
+    const modal = document.getElementById('player-modal');
+    const modalAudio = document.getElementById('modal-audio');
+    const modalDownload = document.getElementById('modal-download');
+    const modalSrt = document.getElementById('modal-srt');
+    const modalClose = document.getElementById('modal-close');
+    const cleanupBtn = document.getElementById('cleanup-btn');
+    const uploadTrigger = document.getElementById('upload-trigger');
+    const uploadModal = document.getElementById('upload-modal');
+    const uploadClose = document.getElementById('upload-close');
+
+    async function fetchJSON(url, options = {}) {
+      const res = await fetch(url, options);
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(text || res.statusText);
+      }
+      return res.json();
+    }
+
+    async function loadVoices() {
+      try {
+        const data = await fetchJSON('/voices');
+        promptSelect.innerHTML = '';
+        if (!data.voices || data.voices.length === 0) {
+          promptSelect.innerHTML = '<option value="tests/sample_prompt.wav">默认示例音色</option>';
+          return;
+        }
+        data.voices.forEach(v => {
+          const opt = document.createElement('option');
+          opt.value = v.name;
+          opt.textContent = v.name;
+          promptSelect.appendChild(opt);
+        });
+      } catch (err) {
+        console.error(err);
+        promptSelect.innerHTML = '<option value="tests/sample_prompt.wav">默认示例音色</option>';
+      }
+    }
+
+    function setStatus(text, tone = 'muted') {
+      statusText.textContent = text || '';
+      statusText.style.color = tone === 'danger' ? '#ffc6c6' : (tone === 'accent' ? '#a2ffd7' : '#9fb4d6');
+    }
+
+    function setUploadStatus(text, tone = 'muted') {
+      uploadStatus.textContent = text || '';
+      uploadStatus.style.color = tone === 'danger' ? '#ffc6c6' : (tone === 'accent' ? '#a2ffd7' : '#9fb4d6');
+    }
+
+    function formatTime(ts) {
+      if (!ts) return '-';
+      const d = new Date(ts * 1000);
+      return d.toLocaleString();
+    }
+
+    function renderHistory(tasks) {
+      if (!tasks || tasks.length === 0) {
+        historyBody.innerHTML = '<tr><td colspan="6" class="muted">暂无任务</td></tr>';
+        return;
+      }
+      historyBody.innerHTML = '';
+      const deviceText = {
+        "gpu_cuda": "GPU CUDA",
+        "gpu": "GPU",
+        "cpu": "CPU",
+        "auto": "AUTO"
+      };
+      tasks.forEach(task => {
+        const tr = document.createElement('tr');
+        const badgeClass = task.status === 'completed' ? 'success' : (task.status === 'failed' ? 'danger' : 'warn');
+        const badgeText = task.status === 'completed' ? '完成' : (task.status === 'failed' ? '失败' : '队列中');
+        const metrics = [];
+        if (task.audio_duration) metrics.push(`<span class="chip">时长 ${task.audio_duration.toFixed(2)}s</span>`);
+        if (task.generation_time) metrics.push(`<span class="chip">耗时 ${task.generation_time.toFixed(2)}s</span>`);
+        if (task.rtf) metrics.push(`<span class="chip">RTF ${task.rtf.toFixed(2)}</span>`);
+        tr.innerHTML = `
+          <td><span class="badge ${badgeClass}">${badgeText}</span></td>
+          <td class="muted">${deviceText[task.device_mode] || 'AUTO'}</td>
+          <td class="muted">${task.text || ''}</td>
+          <td class="muted">${formatTime(task.created_at)}</td>
+          <td>${metrics.length ? metrics.join(' ') : '<span class="muted">--</span>'}</td>
+          <td>
+            ${task.status === 'completed'
+              ? `<button class="ghost-btn" data-play-id="${task.task_id}">播放</button> · <a class="link" href="/download/${task.task_id}/srt" target="_blank">字幕</a>`
+              : '<span class="muted">等待中</span>'}
+          </td>
+        `;
+        historyBody.appendChild(tr);
+      });
+    }
+
+    function openPlayer(taskId) {
+      const audioUrl = `/download/${taskId}`;
+      const srtUrl = `/download/${taskId}/srt`;
+      modalAudio.src = audioUrl;
+      modalDownload.href = audioUrl;
+      modalSrt.href = srtUrl;
+      modal.style.display = 'flex';
+      modalAudio.play().catch(() => {});
+    }
+
+    function closePlayer() {
+      modal.style.display = 'none';
+      modalAudio.pause();
+    }
+
+    function openUpload() {
+      uploadModal.style.display = 'flex';
+    }
+
+    function closeUpload() {
+      uploadModal.style.display = 'none';
+      setUploadStatus('选择文件后点击上传');
+      voiceFile.value = '';
+    }
+
+    async function refreshHistory() {
+      try {
+        const data = await fetchJSON('/tasks');
+        renderHistory(data.tasks || []);
+      } catch (err) {
+        setStatus('获取历史失败：' + err.message, 'danger');
+      }
+    }
+
+    async function refreshQueueInfo() {
+      try {
+        const data = await fetchJSON('/status');
+        queueInfo.textContent = `队列: ${data.queue_size} · 处理中: ${data.is_processing ? '是' : '否'} · 任务总数: ${data.total_tasks}`;
+      } catch (err) {
+        queueInfo.textContent = '无法获取队列状态';
+      }
+    }
+
+    function showResult(task) {
+      if (!task || task.status !== 'completed') return;
+      resultTags.innerHTML = '';
+      if (task.audio_duration) {
+        const tag = document.createElement('div');
+        tag.className = 'chip';
+        tag.textContent = `时长 ${task.audio_duration.toFixed(2)}s`;
+        resultTags.appendChild(tag);
+      }
+      if (task.generation_time) {
+        const tag = document.createElement('div');
+        tag.className = 'chip';
+        tag.textContent = `耗时 ${task.generation_time.toFixed(2)}s`;
+        resultTags.appendChild(tag);
+      }
+      if (task.rtf) {
+        const tag = document.createElement('div');
+        tag.className = 'chip';
+        tag.textContent = `RTF ${task.rtf.toFixed(2)}`;
+        resultTags.appendChild(tag);
+      }
+      audioPlayer.src = `/download/${task.task_id}`;
+      downloadLink.href = `/download/${task.task_id}`;
+      srtLink.href = `/download/${task.task_id}/srt`;
+      resultBox.style.display = 'block';
+      audioPlayer.play().catch(() => {});
+    }
+
+    async function pollTask(taskId) {
+      const poll = async () => {
+        try {
+          const data = await fetchJSON(`/task/${taskId}`);
+          if (data.status === 'completed') {
+            setStatus('生成完成', 'accent');
+            showResult(data);
+            refreshHistory();
+            refreshQueueInfo();
+          } else if (data.status === 'failed') {
+            setStatus('生成失败：' + (data.error || '未知原因'), 'danger');
+          } else {
+            setStatus('任务处理中...', 'accent');
+            setTimeout(poll, 1500);
+          }
+        } catch (err) {
+          setStatus('查询任务失败：' + err.message, 'danger');
+        }
+      };
+      poll();
+    }
+
+    async function uploadVoiceFile() {
+      const file = voiceFile.files[0];
+      if (!file) {
+        setUploadStatus('请选择wav文件', 'danger');
+        return;
+      }
+      if (!file.name.toLowerCase().endsWith('.wav')) {
+        setUploadStatus('仅支持wav文件', 'danger');
+        return;
+      }
+      if (file.size > 2 * 1024 * 1024) {
+        setUploadStatus('文件超过2MB限制', 'danger');
+        return;
+      }
+      const formData = new FormData();
+      formData.append('file', file);
+      uploadBtn.disabled = true;
+      setUploadStatus('上传中...');
+      try {
+        const data = await fetchJSON('/voices/upload', { method: 'POST', body: formData });
+        const newVoice = data.voice;
+        setUploadStatus('上传成功，已加入音色列表', 'accent');
+        await loadVoices();
+        if (newVoice) promptSelect.value = newVoice;
+      } catch (err) {
+        setUploadStatus('上传失败：' + err.message, 'danger');
+      } finally {
+        uploadBtn.disabled = false;
+        voiceFile.value = '';
+      }
+    }
+
+    async function cleanupAll() {
+      cleanupBtn.disabled = true;
+      setStatus('清理中...');
+      try {
+        await fetchJSON('/cleanup', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ clear_cache: true, clear_outputs_flag: true })
+        });
+        setStatus('清理完成', 'accent');
+        setUploadStatus('');  // reset upload status
+        refreshHistory();
+        refreshQueueInfo();
+        resultBox.style.display = 'none';
+      } catch (err) {
+        setStatus('清理失败：' + err.message, 'danger');
+      } finally {
+        cleanupBtn.disabled = false;
+      }
+    }
+
+    formEl.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const text = document.getElementById('text').value.trim();
+      if (!text) {
+        setStatus('请输入文本内容', 'danger');
+        return;
+      }
+      const payload = {
+        text,
+        prompt_audio: promptSelect.value || 'tests/sample_prompt.wav',
+        emo_text: document.getElementById('emo_text').value.trim() || null,
+        force_split_at_newline: document.getElementById('force_split').checked,
+        device_mode: deviceMode.value || 'auto'
+      };
+      const durationVal = document.getElementById('target_duration').value;
+      if (durationVal) {
+        payload.target_duration = parseFloat(durationVal);
+      }
+      submitBtn.disabled = true;
+      setStatus('提交中...');
+      try {
+        const data = await fetchJSON('/tts', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        setStatus('已提交，开始生成...');
+        pollTask(data.task_id);
+      } catch (err) {
+        setStatus('提交失败：' + err.message, 'danger');
+      } finally {
+        submitBtn.disabled = false;
+      }
+    });
+
+    historyBody.addEventListener('click', (e) => {
+      const btn = e.target.closest('[data-play-id]');
+      if (btn) {
+        e.preventDefault();
+        const tid = btn.getAttribute('data-play-id');
+        openPlayer(tid);
+      }
+    });
+
+    modalClose.addEventListener('click', closePlayer);
+    modal.addEventListener('click', (e) => { if (e.target === modal) closePlayer(); });
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        closePlayer();
+        closeUpload();
+      }
+    });
+
+    uploadBtn.addEventListener('click', uploadVoiceFile);
+    uploadTrigger.addEventListener('click', openUpload);
+    uploadClose.addEventListener('click', closeUpload);
+    uploadModal.addEventListener('click', (e) => { if (e.target === uploadModal) closeUpload(); });
+    cleanupBtn.addEventListener('click', cleanupAll);
+    refreshHistoryBtn.addEventListener('click', refreshHistory);
+    refreshQueueBtn.addEventListener('click', () => { refreshQueueInfo(); refreshHistory(); });
+
+    loadVoices();
+    refreshHistory();
+    refreshQueueInfo();
+    setInterval(refreshHistory, 12000);
+    setInterval(refreshQueueInfo, 12000);
+  </script>
+</body>
+</html>
